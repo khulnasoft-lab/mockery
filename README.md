@@ -18,7 +18,7 @@ Visit the [releases page](https://github.com/vektra/mockery/releases) to downloa
 Use the [Docker image](https://hub.docker.com/r/vektra/mockery)
 
 ```
-docker pull vektra/mockery
+docker pull ghcr.io/khulnasoft-lab/mockery
 ```
 
 ### Homebrew
