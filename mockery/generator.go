@@ -599,7 +599,7 @@ func (g *Generator) generateExpectation(fname string, params, returns *paramList
 	if 0 < len(params.Names) {
 		g.printf("type %s%sArgs struct{\n", g.iface.Name, fname)
 		for i, name := range params.Names {
-			g.printf("%s %s\n", strings.Title(name), strings.Replace(params.Types[i], "...", "[]", 1))
+			g.printf("%s %s\n", strings.Title(name), strings.Replace(params.Types[i],"...","[]", 1))
 			g.printf("%sAnything bool\n", strings.Title(name))
 		}
 		g.printf("}\n\n")
@@ -628,11 +628,11 @@ func (g *Generator) generateExpectation(fname string, params, returns *paramList
 		name = strings.Title(name)
 		g.printf("if e.Args.%sAnything {\n", name)
 		g.printf("    args = append(args, mock.Anything)\n")
-		if strings.HasPrefix(params.Types[i], "...") {
+		if strings.HasPrefix(params.Types[i], "..."){
 			g.printf("} else if e.Args.%s != nil {\n", name)
 			g.printf("    args = append(args, e.Args.%s)\n", name)
 			g.printf("}\n")
-		} else {
+		}else{
 			g.printf("} else {\n")
 			g.printf("    args = append(args, e.Args.%s)\n", name)
 			g.printf("}\n")

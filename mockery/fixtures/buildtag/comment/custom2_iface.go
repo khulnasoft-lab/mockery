@@ -1,4 +1,3 @@
-//go:build custom2
 // +build custom2
 
 package comment

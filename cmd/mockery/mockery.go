@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/khulnasoft-lab/mockery/mockery"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"github.com/khulnasoft-lab/mockery/mockery"
 	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/tools/go/packages"
 )
