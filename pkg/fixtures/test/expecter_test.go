@@ -193,3 +193,88 @@ func intfSlice(slice interface{}) []interface{} {
 		panic("inftSlice only accepts slices or arrays")
 	}
 }
+
+func TestExpectationStructs(t *testing.T) {
+	expMock := mocks.Expecter{}
+
+	t.Run("NoArg", func(t *testing.T) {
+		exp := mocks.ExpecterNoArgExpectation{
+			Args: mocks.ExpecterNoArgArgs{
+				StrAnything: true,
+			},
+			Returns: mocks.ExpecterNoArgReturns{
+				Str: defaultString,
+			},
+		}
+		expMock.ApplyNoArgExpectation(exp)
+
+		str := expMock.NoArg()
+		require.Equal(t, defaultString, str)
+		expMock.AssertExpectations(t)
+	})
+
+	t.Run("NoReturn", func(t *testing.T) {
+		exp := mocks.ExpecterNoReturnExpectation{
+			Args: mocks.ExpecterNoReturnArgs{
+				Str: defaultString,
+			},
+		}
+		expMock.ApplyNoReturnExpectation(exp)
+
+		expMock.NoReturn(defaultString)
+		expMock.AssertExpectations(t)
+	})
+
+	t.Run("ManyArgsReturns", func(t *testing.T) {
+		exp := mocks.ExpecterManyArgsReturnsExpectation{
+			Args: mocks.ExpecterManyArgsReturnsArgs{
+				Str: defaultString,
+				I:   defaultInt,
+			},
+			Returns: mocks.ExpecterManyArgsReturnsReturns{
+				Strs: []string{defaultString, defaultString},
+				Err:  defaultError,
+			},
+		}
+		expMock.ApplyManyArgsReturnsExpectation(exp)
+
+		strs, err := expMock.ManyArgsReturns(defaultString, defaultInt)
+		require.Equal(t, []string{defaultString, defaultString}, strs)
+		require.Equal(t, defaultError, err)
+		expMock.AssertExpectations(t)
+	})
+
+	t.Run("Variadic", func(t *testing.T) {
+		exp := mocks.ExpecterVariadicExpectation{
+			Args: mocks.ExpecterVariadicArgs{
+				Ints: []int{1, 2, 3},
+			},
+			Returns: mocks.ExpecterVariadicReturns{
+				Err: defaultError,
+			},
+		}
+		expMock.ApplyVariadicExpectation(exp)
+
+		err := expMock.Variadic(1, 2, 3)
+		require.Equal(t, defaultError, err)
+		expMock.AssertExpectations(t)
+	})
+
+	t.Run("VariadicMany", func(t *testing.T) {
+		exp := mocks.ExpecterVariadicManyExpectation{
+			Args: mocks.ExpecterVariadicManyArgs{
+				I:     defaultInt,
+				A:     defaultString,
+				Intfs: []interface{}{1, 2, 3},
+			},
+			Returns: mocks.ExpecterVariadicManyReturns{
+				Err: defaultError,
+			},
+		}
+		expMock.ApplyVariadicManyExpectation(exp)
+
+		err := expMock.VariadicMany(defaultInt, defaultString, 1, 2, 3)
+		require.Equal(t, defaultError, err)
+		expMock.AssertExpectations(t)
+	})
+}
