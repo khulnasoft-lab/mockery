@@ -908,14 +908,22 @@ func (_m *{{.MockName}}{{.InstantiatedTypeString}}) {{.FunctionName}}({{join .Pa
 
 func (g *Generator) generateExpectation(fname string, params, returns *paramList) {
 	// clone slices to avoid shadow overwriting
-	params = &paramList{
-		Names: slices.Clone(params.Names),
-		Types: slices.Clone(params.Types),
-	}
-	returns = &paramList{
-		Names: slices.Clone(returns.Names),
-		Types: slices.Clone(returns.Types),
-	}
+ params = &paramList{
+     Names: make([]string, 0),
+     Types: make([]string, 0),
+ }
+ if params != nil {
+     params.Names = slices.Clone(params.Names)
+     params.Types = slices.Clone(params.Types)
+ }
+ returns = &paramList{
+     Names: make([]string, 0),
+     Types: make([]string, 0),
+ }
+ if returns != nil {
+     returns.Names = slices.Clone(returns.Names)
+     returns.Types = slices.Clone(returns.Types)
+ }
 	for i, name := range params.Names {
 		params.Names[i] = strings.ToUpper(name[:1]) + name[1:]
 	}
