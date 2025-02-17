@@ -329,6 +329,47 @@ requesterMock.EXPECT().
 	Note that the types of the arguments on the `EXPECT` methods are `interface{}`, not the actual type of your interface. The reason for this is that you may want to pass `mock.Any` as an argument, which means that the argument you pass may be an arbitrary type. The types are still provided in the expecter method docstrings.
 
 
+Expectation Structs
+-------------------
+
+:octicons-tag-24: v2.26.0
+
+Mockery now supports the generation of Expectation structs and functions. These structs and functions allow you to define expectations for your mock methods in a more structured way.
+
+For example, given an interface such as
+```go
+type Expecter interface {
+	NoArg() string
+	NoReturn(str string)
+	ManyArgsReturns(str string, i int) (strs []string, err error)
+	Variadic(ints ...int) error
+	VariadicMany(i int, a string, intfs ...interface{}) error
+}
+```
+
+You can define expectations using the generated Expectation structs and functions:
+
+```go
+expMock := mocks.Expecter{}
+
+exp := mocks.ExpecterNoArgExpectation{
+	Args: mocks.ExpecterNoArgArgs{
+		StrAnything: true,
+	},
+	Returns: mocks.ExpecterNoArgReturns{
+		Str: "some string",
+	},
+}
+expMock.ApplyNoArgExpectation(exp)
+
+str := expMock.NoArg()
+require.Equal(t, "some string", str)
+expMock.AssertExpectations(t)
+```
+
+The generated Expectation structs and functions provide a more structured way to define expectations for your mock methods, making your tests more readable and maintainable.
+
+
 Return Value Providers
 ----------------------
 
