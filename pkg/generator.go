@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"text/template"
@@ -827,6 +828,8 @@ func (g *Generator) generateMethod(ctx context.Context, method *Method) {
 	returns := g.genList(ctx, ftype.Results(), false)
 	preamble, called := g.generateCalled(params, returns)
 
+	g.generateExpectation(fname, params, returns)
+
 	data := struct {
 		FunctionName           string
 		Params                 *paramList
@@ -901,6 +904,93 @@ func (_m *{{.MockName}}{{.InstantiatedTypeString}}) {{.FunctionName}}({{join .Pa
 	if g.config.WithExpecter {
 		g.generateExpecterMethodCall(ctx, method, params, returns)
 	}
+}
+
+func (g *Generator) generateExpectation(fname string, params, returns *paramList) {
+	// clone slices to avoid shadow overwriting
+ params = &paramList{
+     Names: make([]string, 0),
+     Types: make([]string, 0),
+ }
+ if params != nil {
+     params.Names = slices.Clone(params.Names)
+     params.Types = slices.Clone(params.Types)
+ }
+ returns = &paramList{
+     Names: make([]string, 0),
+     Types: make([]string, 0),
+ }
+ if returns != nil {
+     returns.Names = slices.Clone(returns.Names)
+     returns.Types = slices.Clone(returns.Types)
+ }
+	for i, name := range params.Names {
+		params.Names[i] = strings.ToUpper(name[:1]) + name[1:]
+	}
+	for i, name := range returns.Names {
+		returns.Names[i] = strings.ToUpper(name[:1]) + name[1:]
+	}
+	data := struct {
+		FunctionName  string
+		InterfaceName string
+		MockName      string
+		Params        *paramList
+		Returns       *paramList
+	}{
+		FunctionName:  fname,
+		InterfaceName: g.iface.Name,
+		MockName:      g.mockName(),
+		Params:        params,
+		Returns:       returns,
+	}
+
+	g.printTemplate(data, `
+{{- if .Params.Names }}
+type {{ .InterfaceName }}{{ .FunctionName }}Args struct {
+    {{- range $i, $name := .Params.Names }}
+    {{ $name | firstUpper }} {{ trimPrefix (index $.Params.Types $i) "..."}}
+    {{ $name }}Anything bool
+    {{- end }}
+}
+{{ end }}
+
+{{- if .Returns.Names }}
+type {{ .InterfaceName }}{{ .FunctionName }}Returns struct {
+    {{- range $i, $name := .Returns.Names }}
+    {{ $name }} {{ index $.Returns.Types $i }}
+    {{- end }}
+}
+{{ end }}
+
+type {{ .InterfaceName }}{{ .FunctionName }}Expectation struct {
+    {{- if .Params.Names }}
+    Args {{ .InterfaceName }}{{ .FunctionName }}Args
+    {{- end }}
+    {{- if .Returns.Names }}
+    Returns {{ .InterfaceName }}{{ .FunctionName }}Returns
+    {{- end }}
+}
+
+func (_m *{{ .MockName }}) Apply{{ .FunctionName }}Expectation(e {{ .InterfaceName }}{{ .FunctionName }}Expectation) {
+    var args []interface{}
+    {{- range $name := .Params.Names }}
+    if e.Args.{{ $name }}Anything {
+        args = append(args, mock.Anything)
+    } else {
+        args = append(args, e.Args.{{ $name }})
+    }
+    {{- end }}
+
+    _m.On("{{ .FunctionName }}", args...)
+	{{- if .Returns.Names -}}
+	.Return(
+        {{- range $i, $name := .Returns.Names -}}
+        e.Returns.{{ $name }},
+        {{- end }}
+    )
+    {{- end }}
+}
+`)
 }
 
 func (g *Generator) generateExpecterStruct(ctx context.Context) {
